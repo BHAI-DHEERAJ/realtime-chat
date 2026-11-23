@@ -91,23 +91,42 @@
       </footer>
     </div>
 
+    <div class="gate" id="nameGate" hidden>
+      <div class="gate-card">
+        <div class="gate-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M2 12h4l3-7 5 14 3-7h5" /></svg>
+        </div>
+        <h2>Join the chat</h2>
+        <p>Pick a name so everyone in the lobby knows who's talking.</p>
+        <form id="gateForm">
+          <label for="gateName">Your display name</label>
+          <div class="gate-row">
+            <input id="gateName" maxlength="20" placeholder="e.g. Alex" autocomplete="nickname" required />
+            <button type="button" class="icon-btn" id="gateRandom" title="Suggest a name" aria-label="Suggest a name">
+              <svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>
+            </button>
+          </div>
+          <button class="primary-btn gate-join" type="submit">Enter #lobby</button>
+        </form>
+        <p class="gate-note">Joining room <b>#lobby</b> · No signup needed</p>
+      </div>
+    </div>
+
     <div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <div class="modal-card">
         <div class="modal-head">
-          <h2 id="settingsTitle">Room settings</h2>
+          <h2 id="settingsTitle">Your profile</h2>
           <button class="icon-btn" id="closeSettings" aria-label="Close">
             <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
         <form id="settingsForm">
-          <label for="nameInput">Your display name</label>
+          <label for="nameInput">Display name</label>
           <input id="nameInput" maxlength="20" placeholder="e.g. Alex" required />
-          <label for="roomInput">Room name</label>
-          <input id="roomInput" maxlength="24" placeholder="e.g. developers" required />
-          <p class="modal-note">Anyone with the same room name can chat with you. Rooms are public.</p>
+          <p class="modal-note">Chats happen in the shared <b>#lobby</b> room. Please be kind.</p>
           <div class="modal-actions">
             <button type="button" class="ghost-btn" id="clearBtn">Clear chat</button>
-            <button type="submit" class="primary-btn">Join room</button>
+            <button type="submit" class="primary-btn">Save name</button>
           </div>
         </form>
       </div>

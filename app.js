@@ -27,7 +27,8 @@ const els = {
   status: $("status"), statusText: $("statusText"), online: $("onlineCount"),
   roomLabel: $("roomLabel"), footerRoom: $("footerRoom"), welcomeRoom: $("welcomeRoom"),
   typing: $("typing"), toast: $("toast"), modal: $("settingsModal"),
-  nameInput: $("nameInput"), roomInput: $("roomInput"),
+  nameInput: $("nameInput"),
+  gate: $("nameGate"), gateForm: $("gateForm"), gateName: $("gateName"),
   emojiPanel: $("emojiPanel"),
 };
 
@@ -37,7 +38,7 @@ let connectionFailures = 0;
 let reconnectTimer = null;
 
 let clientId = "";
-let room = "lobby";
+const room = "lobby";
 let userName = "Guest";
 let userColor = "#7c5cff";
 let topics = {};
@@ -59,17 +60,6 @@ let toastTimer = null;
 
 function randomId(len = 8) {
   return Math.random().toString(36).slice(2, 2 + len);
-}
-
-function cleanRoom(value) {
-  return (
-    String(value || "")
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9_-]/g, "")
-      .slice(0, 24) || "lobby"
-  );
 }
 
 function cleanName(value) {
@@ -412,44 +402,37 @@ function stopTyping() {
 
 /* ---------- settings ---------- */
 
-function applyIdentity(nextName, nextRoom, announce = true) {
-  const newName = cleanName(nextName);
-  const newRoom = cleanRoom(nextRoom);
+function joinChat(name) {
+  if (typeof mqtt === "undefined") {
+    setStatus("offline", "Library blocked");
+    toast("Could not load the chat library. Check your connection.");
+    return;
+  }
 
-  if (newName === userName && newRoom === room) return;
+  userName = cleanName(name);
+  userColor = colorFromName(userName);
+  localStorage.setItem("pulsechat.name", userName);
+
+  els.gate.hidden = true;
+  connect();
+  els.input.focus();
+}
+
+function changeName(nextName) {
+  const newName = cleanName(nextName);
+  if (newName === userName) return;
 
   if (client && client.connected) {
     safePublish(topics.presence, presencePayload(true), true);
-    safePublish(topics.typing, JSON.stringify({ user: userName, typing: false, room }), true);
+    safePublish(topics.typing, JSON.stringify({ user: userName, typing: false, room }), false);
   }
 
-  const roomChanged = newRoom !== room;
   userName = newName;
   userColor = colorFromName(userName);
-  room = newRoom;
-
   localStorage.setItem("pulsechat.name", userName);
-  localStorage.setItem("pulsechat.room", room);
-
-  const url = new URL(window.location.href);
-  url.searchParams.set("room", room);
-  window.history.replaceState({}, "", url);
-
-  els.roomLabel.textContent = room;
-  els.welcomeRoom.textContent = `#${room}`;
-  els.footerRoom.textContent = room;
-  document.title = `#${room} — Pulse Chat`;
-
-  if (roomChanged) {
-    els.messages.querySelectorAll(".message, .system").forEach((el) => el.remove());
-    if (els.welcome) els.welcome.hidden = false;
-    els.welcomeRoom.textContent = `#${room}`;
-    seenMessages.clear();
-    historyTopics.clear();
-  }
 
   connect();
-  if (announce) toast(roomChanged ? `Joined #${room}` : `You are now ${userName}`);
+  toast(`You are now ${userName}`);
 }
 
 function clearChat() {
@@ -499,9 +482,18 @@ function bindEvents() {
     localStorage.setItem("pulsechat.theme", next);
   });
 
+  els.gateForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    joinChat(els.gateName.value);
+  });
+
+  $("gateRandom").addEventListener("click", () => {
+    els.gateName.value = `Guest-${randomId(4)}`;
+    els.gateName.focus();
+  });
+
   $("settingsBtn").addEventListener("click", () => {
     els.nameInput.value = userName;
-    els.roomInput.value = room;
     els.modal.classList.remove("hidden");
     els.nameInput.focus();
   });
@@ -514,19 +506,17 @@ function bindEvents() {
   $("settingsForm").addEventListener("submit", (event) => {
     event.preventDefault();
     els.modal.classList.add("hidden");
-    applyIdentity(els.nameInput.value, els.roomInput.value);
+    changeName(els.nameInput.value);
   });
 
   $("clearBtn").addEventListener("click", clearChat);
 
   $("inviteBtn").addEventListener("click", async () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("room", room);
     try {
-      await navigator.clipboard.writeText(url.toString());
+      await navigator.clipboard.writeText(window.location.href);
       toast("Invite link copied!");
     } catch (err) {
-      toast(url.toString());
+      toast(window.location.href);
     }
   });
 
@@ -573,30 +563,30 @@ function bindEvents() {
 /* ---------- boot ---------- */
 
 function init() {
-  const params = new URLSearchParams(window.location.search);
   document.documentElement.dataset.theme = localStorage.getItem("pulsechat.theme") || "dark";
-
-  room = cleanRoom(params.get("room") || localStorage.getItem("pulsechat.room") || "lobby");
-  userName = cleanName(params.get("user") || localStorage.getItem("pulsechat.name") || `Guest-${randomId(4)}`);
-  userColor = colorFromName(userName);
 
   els.roomLabel.textContent = room;
   els.welcomeRoom.textContent = `#${room}`;
   els.footerRoom.textContent = room;
   document.title = `#${room} — Pulse Chat`;
 
+  // Old room links still work — everyone lands in the same lobby.
   const url = new URL(window.location.href);
-  url.searchParams.set("room", room);
-  window.history.replaceState({}, "", url);
+  if (url.searchParams.has("room")) {
+    url.searchParams.delete("room");
+    window.history.replaceState({}, "", url);
+  }
 
   bindEvents();
-  if (typeof mqtt === "undefined") {
-    setStatus("offline", "Library blocked");
-    toast("Could not load the MQTT library. Check your connection.");
-    return;
+
+  const savedName = localStorage.getItem("pulsechat.name");
+  if (savedName && savedName.trim()) {
+    joinChat(savedName);
+  } else {
+    els.gate.hidden = false;
+    setStatus("", "Choose a name");
+    requestAnimationFrame(() => els.gateName.focus());
   }
-  connect();
-  els.input.focus();
 }
 
 init();

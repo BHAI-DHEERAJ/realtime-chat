@@ -288,6 +288,59 @@ footer { display: flex; justify-content: space-between; gap: 12px; padding: 14px
 .heart { color: #ff6b8b; }
 .room-tag b { color: var(--accent-2); }
 
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 5, 14, 0.72);
+  backdrop-filter: blur(12px);
+}
+.gate[hidden] { display: none; }
+.gate-card {
+  width: min(400px, 100%);
+  padding: 30px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  box-shadow: var(--shadow);
+  text-align: center;
+  animation: pop 0.25s ease-out;
+}
+.gate-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--accent), #a06aff);
+  box-shadow: 0 10px 26px rgba(124, 92, 255, 0.4);
+}
+.gate-mark svg { width: 28px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.gate-card h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.02em; }
+.gate-card > p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.gate-card label { display: block; text-align: left; font-size: 12px; color: var(--muted); margin: 24px 0 7px; }
+.gate-row { display: flex; gap: 8px; }
+.gate-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  outline: 0;
+}
+.gate-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.14); }
+.gate-join { width: 100%; margin-top: 14px; padding: 12px; }
+.gate-note { margin-top: 16px !important; font-size: 11px !important; }
+.gate-note b { color: var(--accent-2); }
+
 .modal {
   position: fixed;
   inset: 0;

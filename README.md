@@ -13,10 +13,12 @@ Open the same room link in two browsers (or share the **Invite** button) to see 
 ## Features
 
 - ⚡ Realtime messaging with automatic reconnect and broker failover
+- 👤 Name-entry screen before the chat, with your name saved for next time
+- 🏠 Everyone meets in one fixed room: `#lobby`
 - 👥 Live online count using MQTT presence + last-will messages
 - ⌨️ Typing indicators
 - 🕘 Last 30 messages restored via retained topics
-- 🔗 Room links (`?room=developers`) and one-click invite copy
+- 🔗 One-click invite copy
 - 🎨 Dark/light theme, emoji picker, mobile-friendly layout
 - 🧱 XSS-safe rendering (all user text is inserted as text, never HTML)
 
@@ -40,7 +42,7 @@ No build step or secrets required.
 
 ## Rooms and privacy
 
-Anyone who knows a room name can read and write in it. Room names are public by design, and everything goes through a **public** broker — do not share passwords or personal information. Message history is retained on the broker until it is pruned or cleared from the room.
+Everyone at the site shares the single public `#lobby` room. Everything goes through a **public** broker — do not share passwords or personal information. Message history is retained on the broker until it is pruned or cleared from the room.
 
 To make it private, swap `BROKERS` in `app.js` for your own authenticated MQTT broker (WSS) and add token-based auth.
 
