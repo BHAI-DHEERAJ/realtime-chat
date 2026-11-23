@@ -13,7 +13,8 @@ Open the same room link in two browsers (or share the **Invite** button) to see 
 ## Features
 
 - ⚡ Realtime messaging with automatic reconnect and broker failover
-- 👤 Name-entry screen before the chat, with your name saved for next time
+- 👀 Chat history loads immediately — read first, pick a name only when you're ready to type
+- 👤 Name prompt appears when you focus the message box; your name is saved for next time
 - 🏠 Everyone meets in one fixed room: `#lobby`
 - 👥 Live online count using MQTT presence + last-will messages
 - ⌨️ Typing indicators

@@ -41,6 +41,7 @@ let clientId = "";
 const room = "lobby";
 let userName = "Guest";
 let userColor = "#7c5cff";
+let hasName = false;
 let topics = {};
 
 const seenMessages = new Set();
@@ -231,7 +232,7 @@ function connect() {
     keepalive: 30,
     connectTimeout: 12000,
     reconnectPeriod: 2000,
-    will,
+    will: hasName ? will : undefined,
   });
 
   client.on("connect", onConnect);
@@ -280,7 +281,7 @@ function onConnect() {
     }
   );
 
-  safePublish(topics.presence, presencePayload(), true);
+  if (hasName) safePublish(topics.presence, presencePayload(), true);
 
   while (pendingMessages.length) {
     const text = pendingMessages.shift();
@@ -402,6 +403,17 @@ function stopTyping() {
 
 /* ---------- settings ---------- */
 
+function updateComposerHint() {
+  els.input.placeholder = hasName ? "Type a message…" : "Pick a name to join the chat…";
+}
+
+function requestName() {
+  if (hasName || !els.gate.hidden) return;
+  els.gate.hidden = false;
+  setStatus("", "Pick a name to chat");
+  requestAnimationFrame(() => els.gateName.focus());
+}
+
 function joinChat(name) {
   if (typeof mqtt === "undefined") {
     setStatus("offline", "Library blocked");
@@ -409,12 +421,23 @@ function joinChat(name) {
     return;
   }
 
+  const wasNamed = hasName;
   userName = cleanName(name);
   userColor = colorFromName(userName);
+  hasName = true;
   localStorage.setItem("pulsechat.name", userName);
+  updateComposerHint();
 
   els.gate.hidden = true;
-  connect();
+  if (wasNamed) {
+    connect();
+  } else if (client && client.connected) {
+    safePublish(topics.presence, presencePayload(), true);
+    addSystem(`${userName} joined the room`);
+  } else {
+    connect();
+  }
+  setStatus(client && client.connected ? "online" : "", client && client.connected ? "Live" : "Connecting…");
   els.input.focus();
 }
 
@@ -429,7 +452,9 @@ function changeName(nextName) {
 
   userName = newName;
   userColor = colorFromName(userName);
+  hasName = true;
   localStorage.setItem("pulsechat.name", userName);
+  updateComposerHint();
 
   connect();
   toast(`You are now ${userName}`);
@@ -449,6 +474,7 @@ function clearChat() {
 function bindEvents() {
   els.composer.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!hasName) { requestName(); return; }
     const text = els.input.value;
     if (!text.trim()) return;
     publishMessage(text);
@@ -475,6 +501,7 @@ function bindEvents() {
   });
 
   els.input.addEventListener("blur", stopTyping);
+  els.input.addEventListener("focus", requestName);
 
   $("themeBtn").addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
@@ -490,6 +517,12 @@ function bindEvents() {
   $("gateRandom").addEventListener("click", () => {
     els.gateName.value = `Guest-${randomId(4)}`;
     els.gateName.focus();
+  });
+
+  $("gateCancel").addEventListener("click", () => {
+    els.gate.hidden = true;
+    els.input.blur();
+    setStatus(client && client.connected ? "online" : "", client && client.connected ? "Live" : "Connecting…");
   });
 
   $("settingsBtn").addEventListener("click", () => {
@@ -578,15 +611,18 @@ function init() {
   }
 
   bindEvents();
+  updateComposerHint();
 
   const savedName = localStorage.getItem("pulsechat.name");
   if (savedName && savedName.trim()) {
-    joinChat(savedName);
-  } else {
-    els.gate.hidden = false;
-    setStatus("", "Choose a name");
-    requestAnimationFrame(() => els.gateName.focus());
+    userName = cleanName(savedName);
+    userColor = colorFromName(userName);
+    hasName = true;
+    updateComposerHint();
   }
+
+  // Read history immediately; the name gate only appears when they try to chat.
+  connect();
 }
 
 init();
