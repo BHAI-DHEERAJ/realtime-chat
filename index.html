@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A free, realtime chat room that runs on GitHub Pages." />
+    <title>Pulse Chat — Realtime chat on GitHub Pages</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%237c5cff'/%3E%3Cpath d='M22 54h14l8-20 12 36 8-18h14' fill='none' stroke='white' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/mqtt@5.10.4/dist/mqtt.min.js"></script>
+  </head>
+  <body>
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M2 12h4l3-7 5 14 3-7h5" /></svg>
+          </div>
+          <div>
+            <h1>Pulse Chat</h1>
+            <p>Realtime, no signup, just vibes.</p>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="status" id="status" title="Connection status">
+            <span class="status-dot"></span>
+            <span id="statusText">Connecting…</span>
+          </div>
+          <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
+          </button>
+          <button class="icon-btn" id="settingsBtn" title="Room settings" aria-label="Room settings">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.56V21h-4v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1H3v-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3h4v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="chat-card">
+        <div class="room-bar">
+          <div class="room-info">
+            <span class="hash">#</span>
+            <strong id="roomLabel">lobby</strong>
+            <span class="online"><span class="online-dot"></span><span id="onlineCount">1</span> online</span>
+          </div>
+          <button class="text-btn" id="inviteBtn" title="Copy invite link">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>
+            Invite
+          </button>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="welcome-icon">👋</div>
+            <h2>Welcome to <span id="welcomeRoom">#lobby</span></h2>
+            <p>Messages are public and disappear from history after a while. Be kind.</p>
+          </div>
+        </div>
+
+        <div class="typing" id="typing" aria-live="polite"></div>
+
+        <form class="composer" id="composer" autocomplete="off">
+          <button type="button" class="icon-btn emoji-btn" id="emojiBtn" aria-label="Add emoji">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><path d="M9 9h.01M15 9h.01" /></svg>
+          </button>
+          <div class="emoji-panel" id="emojiPanel" hidden></div>
+          <textarea
+            id="messageInput"
+            rows="1"
+            maxlength="500"
+            placeholder="Type a message…"
+            aria-label="Message"
+          ></textarea>
+          <span class="counter" id="counter"></span>
+          <button class="send-btn" id="sendBtn" type="submit" title="Send message" aria-label="Send message">
+            <svg viewBox="0 0 24 24"><path d="m4 12 16-8-6 16-2.5-6.5L4 12Z" /></svg>
+          </button>
+        </form>
+        <p class="hint">Enter to send · Shift + Enter for a new line</p>
+      </main>
+
+      <footer>
+        <span>Made with <span class="heart">♥</span> and public MQTT · Powered by GitHub Pages</span>
+        <span class="room-tag">Room: <b id="footerRoom">lobby</b></span>
+      </footer>
+    </div>
+
+    <div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2 id="settingsTitle">Room settings</h2>
+          <button class="icon-btn" id="closeSettings" aria-label="Close">
+            <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <form id="settingsForm">
+          <label for="nameInput">Your display name</label>
+          <input id="nameInput" maxlength="20" placeholder="e.g. Alex" required />
+          <label for="roomInput">Room name</label>
+          <input id="roomInput" maxlength="24" placeholder="e.g. developers" required />
+          <p class="modal-note">Anyone with the same room name can chat with you. Rooms are public.</p>
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" id="clearBtn">Clear chat</button>
+            <button type="submit" class="primary-btn">Join room</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
